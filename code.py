@@ -1,12 +1,11 @@
 import pandas as pd
 import time
 from mlxtend.frequent_patterns import apriori, fpgrowth
+from mlxtend.preprocessing import TransactionEncoder
 
-# Load mushroom dataset
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"
 data = pd.read_csv(url, header=None)
 
-# Add column names
 data.columns = [
     "class","cap-shape","cap-surface","cap-color","bruises","odor",
     "gill-attachment","gill-spacing","gill-size","gill-color",
@@ -16,25 +15,52 @@ data.columns = [
     "ring-type","spore-print-color","population","habitat"
 ]
 
-# Convert to one-hot encoded transaction format
+transactions = [
+    ['milk', 'bread', 'eggs'],
+    ['milk', 'bread'],
+    ['milk', 'eggs'],
+    ['bread', 'butter'],
+    ['milk', 'bread', 'butter'],
+    ['bread', 'eggs'],
+    ['milk', 'butter'],
+    ['milk', 'bread', 'eggs', 'butter']
+]
+
+te = TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+small_df = pd.DataFrame(te_array, columns=te.columns_)
+
 one_hot = pd.get_dummies(data)
 
-# Convert min_support = 500 transactions into fraction
 min_support = 500 / len(one_hot)
+small_support = 0.3
 
-#Apriori
+#Apriori Mushroom
 start = time.time()
 apriori_result = apriori(one_hot, min_support=min_support, use_colnames=True, low_memory=True)
 apriori_time = time.time() - start
 
-#FP-Growth
+#FP-Growth Mushroom
 start = time.time()
 fpgrowth_result = fpgrowth(one_hot, min_support=min_support, use_colnames=True)
 fpgrowth_time = time.time() - start
 
-# Print results
-print("\n--- Results ---")
+#Apriori Small_data
+start = time.time()
+small_ap = apriori(small_df, min_support=small_support, use_colnames=True, low_memory=True)
+small_ap_time = time.time() - start
+
+#FP-Growth Small_data
+start = time.time()
+small_fp = fpgrowth(small_df, min_support=small_support, use_colnames=True)
+small_fp_time = time.time() - start
+
+print("\n--- Mushroom Results ---")
 print("Apriori Time:", apriori_time)
 print("FP-Growth Time:", fpgrowth_time)
 print("Apriori Itemsets:", len(apriori_result))
 print("FP-Growth Itemsets:", len(fpgrowth_result))
+
+print("\n--- Small_data Results ---")
+print("Apriori:", small_ap_time)
+print("FP-Growth:", small_fp_time)
